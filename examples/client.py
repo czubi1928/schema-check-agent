@@ -23,21 +23,22 @@ class SimpleClient(Client):
 
 async def main() -> None:
     script = Path(__file__).parent / "schema_check_agent.py"
+    data_dir = Path(__file__).parent / "data"
+
     async with spawn_agent_process(SimpleClient(), sys.executable, str(script)) as (conn, _proc):
         await conn.initialize(protocol_version=1)
         session = await conn.new_session(cwd=str(script.parent), mcp_servers=[])
 
-        test_inputs = [
-            '{"name": "Alice", "age": 30}',   # valid dict
-            '[1, 2, 3]',                        # valid list
-            'not valid json',                   # invalid
+        files = [
+            data_dir / "users.json",
+            data_dir / "scores.csv",
         ]
 
-        for prompt_text in test_inputs:
-            print(f"\n--- Sending: {prompt_text!r} ---")
+        for file_path in files:
+            print(f"\n{'=' * 50}")
             await conn.prompt(
                 session_id=session.session_id,
-                prompt=[text_block(prompt_text)],
+                prompt=[text_block(str(file_path))],
             )
 
 
